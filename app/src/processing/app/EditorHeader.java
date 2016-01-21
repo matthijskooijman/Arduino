@@ -80,26 +80,29 @@ public class EditorHeader extends JComponent {
   int imageW, imageH;
 
   public class Actions {
-    public final Action newTab = new SimpleAction(tr("New Tab"),
-        Keys.ctrlShift(KeyEvent.VK_N),
-        () -> editor.getSketchController().handleNewCode());
+    public final Action newTab = new SimpleAction(tr("New Tab"))
+        .accelerator(Keys.ctrlShift(KeyEvent.VK_N))
+        .listener(() -> editor.getSketchController().handleNewCode());
 
-    public final Action renameTab = new SimpleAction(tr("Rename"),
-        () -> editor.getSketchController().handleRenameCode());
+    public final Action renameTab = new SimpleAction(tr("Rename"))
+        .listener(() -> editor.getSketchController().handleRenameCode());
 
-    public final Action deleteTab = new SimpleAction(tr("Delete"), () -> {
-      try {
-        editor.getSketchController().handleDeleteCode();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    });
+    public final Action deleteTab = new SimpleAction(tr("Delete"))
+        .listener(() -> {
+          try {
+            editor.getSketchController().handleDeleteCode();
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        });
 
-    public final Action prevTab = new SimpleAction(tr("Previous Tab"),
-        Keys.ctrlAlt(KeyEvent.VK_LEFT), () -> editor.selectPrevTab());
+    public final Action prevTab = new SimpleAction(tr("Previous Tab"))
+       .accelerator(Keys.ctrlAlt(KeyEvent.VK_LEFT))
+       .listener(() -> editor.selectPrevTab());
 
-    public final Action nextTab = new SimpleAction(tr("Next Tab"),
-        Keys.ctrlAlt(KeyEvent.VK_RIGHT), () -> editor.selectNextTab());
+    public final Action nextTab = new SimpleAction(tr("Next Tab"))
+        .accelerator(Keys.ctrlAlt(KeyEvent.VK_RIGHT))
+        .listener(() -> editor.selectNextTab());
 
     Actions() {
       // Explicitly bind keybindings for the actions with accelerators above

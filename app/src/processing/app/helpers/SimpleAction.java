@@ -38,12 +38,13 @@ import javax.swing.KeyStroke;
 /**
  * Class to easily define instances of the Swing Action interface.
  *
- * When using AbstractAction, you have to create a subclass that implements the
- * actionPerformed() method, and sets attributes in the constructor, which gets
- * verbose quickly. This class implements actionPerformed for you, and forwards
- * it to the ActionListener passed to the constructor (intended to be a lambda
- * expression). Additional Action attributes can be set by passing constructor
- * arguments.
+ * When using AbstractAction, you have to create a subclass that
+ * implements the actionPerformed() method, and sets attributes in the
+ * constructor, which gets verbose quickly. This class implements
+ * actionPerformed for you, and forwards it to the ActionListener passed
+ * to the listener method (intended to be a lambda expression).
+ * Additional Action attributes can be set by calling the (chainable)
+ * setters.
  *
  * The name of this class refers to the fact that it's simple to create an
  * action using this class, but perhaps a better name can be found for it.
@@ -63,27 +64,38 @@ public class SimpleAction extends AbstractAction {
     public void actionPerformed();
   }
 
-  public SimpleAction(String name, ActionListener listener) {
-    this(name, null, null, listener);
+  public SimpleAction() {
   }
 
-  public SimpleAction(String name, AnonymousActionListener listener) {
-    this(name, null, null, listener);
+  public SimpleAction(String name) {
+    name(name);
   }
 
-  public SimpleAction(String name, KeyStroke accelerator,
-                      ActionListener listener) {
-    this(name, null, accelerator, listener);
+  /*
+   * Chainable setter methods. The methods below can be used to set
+   * various properties on a SimpleAction. Each returns the object
+   * itself, so they can be chained (starting with the constructor,
+   * typically, setting all needed properties in a single statement).
+   */
+
+  public SimpleAction name(String name) {
+    this.putValue(NAME, name);
+    return this;
   }
 
-  public SimpleAction(String name, KeyStroke accelerator,
-                      AnonymousActionListener listener) {
-    this(name, null, accelerator, listener);
+  public SimpleAction accelerator(KeyStroke keystroke) {
+    this.putValue(ACCELERATOR_KEY, keystroke);
+    return this;
   }
 
-  public SimpleAction(String name, String description,
-                      ActionListener listener) {
-    this(name, description, null, listener);
+  public SimpleAction listener(ActionListener listener) {
+    this.listener = listener;
+    return this;
+  }
+
+  public SimpleAction listener(AnonymousActionListener listener) {
+    this.listener = (ActionEvent) -> listener.actionPerformed();
+    return this;
   }
 
   public SimpleAction(String name, String description,
