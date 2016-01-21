@@ -1814,20 +1814,6 @@ public class Editor extends JFrame implements RunnerListener {
     getCurrentTab().getTextArea().setCaretPosition(getCurrentTab().getTextArea().getLineStartOffset(line));
   }
 
-
-  /**
-   * Implements Sketch &rarr; Stop, or pressing Stop on the toolbar.
-   */
-  private void handleStop() {  // called by menu or buttons
-//    toolbar.activate(EditorToolbar.STOP);
-
-    toolbar.deactivateRun();
-//    toolbar.deactivate(EditorToolbar.STOP);
-
-    // focus the PDE again after quitting presentation mode [toxi 030903]
-    toFront();
-  }
-
   /**
    * Check if the sketch is modified and ask user to save changes.
    * @return false if canceling the close/quit operation
@@ -2007,8 +1993,6 @@ public class Editor extends JFrame implements RunnerListener {
    * <A HREF="http://dev.processing.org/bugs/show_bug.cgi?id=276">Bug 276</A>.
    */
   public boolean handleSave(boolean immediately) {
-    //stopRunner();
-    handleStop();  // 0136
     removeAllLineHighlights();
 
     if (untitled) {
@@ -2070,9 +2054,6 @@ public class Editor extends JFrame implements RunnerListener {
 
 
   public boolean handleSaveAs() {
-    //stopRunner();  // formerly from 0135
-    handleStop();
-
     toolbar.activateSave();
 
     //SwingUtilities.invokeLater(new Runnable() {
