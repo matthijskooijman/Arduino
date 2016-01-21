@@ -36,6 +36,7 @@ import processing.app.forms.PasswordAuthorizationDialog;
 import processing.app.helpers.Keys;
 import processing.app.helpers.OSUtils;
 import processing.app.helpers.PreferencesMapException;
+import processing.app.helpers.SimpleAction;
 import processing.app.legacy.PApplet;
 import processing.app.syntax.PdeKeywords;
 import processing.app.tools.MenuScroller;
@@ -550,33 +551,11 @@ public class Editor extends JFrame implements RunnerListener {
 
 
   private JMenu buildFileMenu() {
-    JMenuItem item;
     fileMenu = new JMenu(tr("File"));
     fileMenu.setMnemonic(KeyEvent.VK_F);
 
-    item = newJMenuItem(tr("New"), 'N');
-    item.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          try {
-            base.handleNew();
-          } catch (Exception e1) {
-            e1.printStackTrace();
-          }
-        }
-      });
-    fileMenu.add(item);
-
-    item = Editor.newJMenuItem(tr("Open..."), 'O');
-    item.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          try {
-            base.handleOpenPrompt();
-          } catch (Exception e1) {
-            e1.printStackTrace();
-          }
-        }
-      });
-    fileMenu.add(item);
+    fileMenu.add(new JMenuItem(newSketchAction));
+    fileMenu.add(new JMenuItem(openSketchAction));
 
     base.rebuildRecentSketchesMenuItems();
     recentSketchesMenu = new JMenu(tr("Open Recent"));
@@ -602,69 +581,21 @@ public class Editor extends JFrame implements RunnerListener {
     }
     fileMenu.add(examplesMenu);
 
-    item = Editor.newJMenuItem(tr("Close"), 'W');
-    item.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          base.handleClose(Editor.this);
-        }
-      });
-    fileMenu.add(item);
-
-    saveMenuItem = newJMenuItem(tr("Save"), 'S');
-    saveMenuItem.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          handleSave(false);
-        }
-      });
+    fileMenu.add(new JMenuItem(closeSketchAction));
+    saveMenuItem = new JMenuItem(saveSketchAction);
     fileMenu.add(saveMenuItem);
-
-    saveAsMenuItem = newJMenuItemShift(tr("Save As..."), 'S');
-    saveAsMenuItem.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          handleSaveAs();
-        }
-      });
+    saveAsMenuItem = new JMenuItem(saveSketchAsAction);
     fileMenu.add(saveAsMenuItem);
-
     fileMenu.addSeparator();
-
-    item = newJMenuItemShift(tr("Page Setup"), 'P');
-    item.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        handlePageSetup();
-      }
-    });
-    fileMenu.add(item);
-
-    item = newJMenuItem(tr("Print"), 'P');
-    item.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          handlePrint();
-        }
-      });
-    fileMenu.add(item);
+    fileMenu.add(new JMenuItem(pageSetupAction));
+    fileMenu.add(new JMenuItem(printAction));
 
     // macosx already has its own preferences and quit menu
     if (!OSUtils.isMacOS()) {
       fileMenu.addSeparator();
-
-      item = newJMenuItem(tr("Preferences"), ',');
-      item.addActionListener(new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            base.handlePrefs();
-          }
-        });
-      fileMenu.add(item);
-
+      fileMenu.add(new JMenuItem(showPreferencesAction));
       fileMenu.addSeparator();
-
-      item = newJMenuItem(tr("Quit"), 'Q');
-      item.addActionListener(new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            base.handleQuit();
-          }
-        });
-      fileMenu.add(item);
+      fileMenu.add(new JMenuItem(quitAction));
     }
     return fileMenu;
   }
@@ -678,60 +609,13 @@ public class Editor extends JFrame implements RunnerListener {
 
   private void buildSketchMenu(JMenu sketchMenu) {
     sketchMenu.removeAll();
-
-    JMenuItem item = newJMenuItem(tr("Verify/Compile"), 'R');
-    item.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          handleRun(false, Editor.this.presentHandler, Editor.this.runHandler);
-        }
-      });
-    sketchMenu.add(item);
-
-    item = newJMenuItem(tr("Upload"), 'U');
-    item.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          handleExport(false);
-        }
-      });
-    sketchMenu.add(item);
-
-    item = newJMenuItemShift(tr("Upload Using Programmer"), 'U');
-    item.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          handleExport(true);
-        }
-      });
-    sketchMenu.add(item);
-
-
-    item = newJMenuItemAlt(tr("Export compiled Binary"), 'S');
-    item.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          if (new ShouldSaveReadOnly().test(sketchController) && !handleSave(true)) {
-            System.out.println(tr("Export canceled, changes must first be saved."));
-            return;
-          }
-          handleRun(false, new ShouldSaveReadOnly(), Editor.this.presentAndSaveHandler, Editor.this.runAndSaveHandler);
-        }
-      });
-    sketchMenu.add(item);
-
-//    item = new JMenuItem("Stop");
-//    item.addActionListener(new ActionListener() {
-//        public void actionPerformed(ActionEvent e) {
-//          handleStop();
-//        }
-//      });
-//    sketchMenu.add(item);
-
+    sketchMenu.add(new JMenuItem(verifyAction));
+    sketchMenu.add(new JMenuItem(uploadAction));
+    sketchMenu.add(new JMenuItem(uploadUsingProgrammerAction));
+    sketchMenu.add(new JMenuItem(verifyAndSaveAction));
     sketchMenu.addSeparator();
 
-    item = newJMenuItem(tr("Show Sketch Folder"), 'K');
-    item.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        Base.openFolder(sketch.getFolder());
-      }
-    });
+    JMenuItem item = new JMenuItem(showSketchFolderAction);
     sketchMenu.add(item);
     item.setEnabled(Base.openFolderAvailable());
 
@@ -741,14 +625,7 @@ public class Editor extends JFrame implements RunnerListener {
       base.rebuildImportMenu(importMenu);
     }
     sketchMenu.add(importMenu);
-
-    item = new JMenuItem(tr("Add File..."));
-    item.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        sketchController.handleAddFile();
-      }
-    });
-    sketchMenu.add(item);
+    sketchMenu.add(new JMenuItem(addFileAction));
   }
 
 
@@ -758,17 +635,8 @@ public class Editor extends JFrame implements RunnerListener {
 
     addInternalTools(toolsMenu);
 
-    JMenuItem item = newJMenuItemShift(tr("Serial Monitor"), 'M');
-    item.addActionListener(e -> handleSerial());
-    toolsMenu.add(item);
-
-    item = newJMenuItemShift(tr("Serial Plotter"), 'L');
-    item.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          handlePlotter();
-        }
-    });
-    toolsMenu.add(item);
+    toolsMenu.add(new JMenuItem(toggleSerialMonitorAction));
+    toolsMenu.add(new JMenuItem(toggleSerialPlotterAction));
 
     addTools(toolsMenu, BaseNoGui.getToolsFolder());
     File sketchbookTools = new File(BaseNoGui.getSketchbookFolder(), "tools");
@@ -794,9 +662,7 @@ public class Editor extends JFrame implements RunnerListener {
     base.getProgrammerMenus().stream().forEach(programmersMenu::add);
     toolsMenu.add(programmersMenu);
 
-    item = new JMenuItem(tr("Burn Bootloader"));
-    item.addActionListener(e -> handleBurnBootloader());
-    toolsMenu.add(item);
+    toolsMenu.add(new JMenuItem(burnBootloaderAction));
 
     toolsMenu.addMenuListener(new StubMenuListener() {
       public void menuSelected(MenuEvent e) {
@@ -1735,6 +1601,130 @@ public class Editor extends JFrame implements RunnerListener {
 
   // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
+  public final SimpleAction newSketchAction = new SimpleAction(tr("New"))
+      .accelerator(Keys.ctrl(KeyEvent.VK_N))
+      .listener(this::handleNewSketch);
+
+  public final SimpleAction openSketchAction = new SimpleAction(tr("Open..."))
+      .accelerator(Keys.ctrl(KeyEvent.VK_O))
+      .listener(this::handleOpenSketch);
+
+  public final SimpleAction saveSketchAction = new SimpleAction(tr("Save"))
+      .accelerator(Keys.ctrl(KeyEvent.VK_S))
+      .listener(() -> {
+        handleSave(false);
+      });
+
+  public final SimpleAction saveSketchAsAction = new SimpleAction(tr("Save As..."))
+      .accelerator(Keys.ctrlShift(KeyEvent.VK_S))
+      .listener(this::handleSaveAs);
+
+  public final SimpleAction closeSketchAction = new SimpleAction(tr("Close"))
+      .accelerator(Keys.ctrl(KeyEvent.VK_W))
+      .listener(this::handleCloseSketch);
+
+
+  public final SimpleAction pageSetupAction = new SimpleAction(tr("Page Setup"))
+      .accelerator(Keys.ctrlShift(KeyEvent.VK_P))
+      .listener(this::handlePageSetup);
+
+  public final SimpleAction printAction = new SimpleAction(tr("Print"))
+      .accelerator(Keys.ctrl(KeyEvent.VK_P))
+      .listener(this::handlePrint);
+
+  public final SimpleAction showPreferencesAction = new SimpleAction(tr("Preferences"))
+      .accelerator(Keys.ctrl(KeyEvent.VK_COMMA))
+      .listener(this::handleShowPreferences);
+
+  public final SimpleAction quitAction = new SimpleAction(tr("Quit"))
+      .accelerator(Keys.ctrl(KeyEvent.VK_Q))
+      .listener(this::handleQuit);
+
+
+  public final SimpleAction verifyAction = new SimpleAction(tr("Verify / Compile"))
+      .accelerator(Keys.ctrl(KeyEvent.VK_R))
+      .listener(() -> {
+        handleRun(false, presentHandler, runHandler);
+      });
+
+  public final SimpleAction uploadAction = new SimpleAction(tr("Upload"))
+      .accelerator(Keys.ctrl(KeyEvent.VK_U))
+      .listener(() -> {
+        handleExport(false);
+      });
+
+  public final SimpleAction uploadUsingProgrammerAction = new SimpleAction(tr("Upload Using Programmer"))
+      .accelerator(Keys.ctrlShift(KeyEvent.VK_U))
+      .listener(() -> {
+        handleExport(true);
+      });
+
+  public final SimpleAction verifyAndSaveAction = new SimpleAction(tr("Export compiled Binary"))
+      .accelerator(Keys.ctrlAlt(KeyEvent.VK_S))
+      .listener(() -> {
+        if (new ShouldSaveReadOnly().test(sketchController) && !handleSave(true)) {
+          System.out.println(tr("Export canceled, changes must first be saved."));
+          return;
+        }
+
+        handleRun(false, new ShouldSaveReadOnly(), Editor.this.presentAndSaveHandler, Editor.this.runAndSaveHandler);
+      });
+
+  public final SimpleAction showSketchFolderAction = new SimpleAction(tr("Show Sketch Folder"))
+      .accelerator(Keys.ctrl(KeyEvent.VK_K))
+      .listener(this::handleShowSketchFolder);
+
+  public final SimpleAction addFileAction = new SimpleAction(tr("Add File..."))
+      .listener(this::handleAddFile);
+
+
+  public final SimpleAction toggleSerialMonitorAction = new SimpleAction(tr("Serial Monitor"))
+      .accelerator(Keys.ctrlShift(KeyEvent.VK_M))
+      .deriveIcons(Base.getThemeImageFile("serial.png"))
+      .listener(this::handleSerial);
+
+  public final SimpleAction toggleSerialPlotterAction = new SimpleAction(tr("Serial Plotter"))
+      .accelerator(Keys.ctrlShift(KeyEvent.VK_L))
+      .listener(this::handlePlotter);
+
+  public final SimpleAction burnBootloaderAction = new SimpleAction(tr("Burn Bootloader"))
+      .listener(this::handleBurnBootloader);
+
+  public void handleNewSketch() {
+    try {
+      base.handleNew();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void handleOpenSketch() {
+    try {
+      base.handleOpenPrompt();
+    } catch (Exception e1) {
+      e1.printStackTrace();
+    }
+  }
+
+  private void handleCloseSketch() {
+    base.handleClose(this);
+  }
+
+  private void handleQuit() {
+    base.handleQuit();
+  }
+
+  private void handleShowPreferences() {
+    base.handlePrefs();
+  }
+
+  private void handleShowSketchFolder() {
+    Base.openFolder(sketch.getFolder());
+  }
+
+  private void handleAddFile() {
+    sketchController.handleAddFile();
+  }
 
   /**
    * Implements Sketch &rarr; Run.
