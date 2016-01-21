@@ -33,6 +33,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.AbstractAction;
+import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
 /**
@@ -98,9 +99,9 @@ public class SimpleAction extends AbstractAction {
     return this;
   }
 
-  public SimpleAction(String name, String description,
-                      AnonymousActionListener listener) {
-    this(name, description, null, listener);
+  public SimpleAction icon(Icon icon) {
+    this.putValue(LARGE_ICON_KEY, icon);
+    return this;
   }
 
   public SimpleAction(String name, String description, KeyStroke accelerator,
