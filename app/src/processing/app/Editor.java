@@ -1603,20 +1603,24 @@ public class Editor extends JFrame implements RunnerListener {
 
   public final SimpleAction newSketchAction = new SimpleAction(tr("New"))
       .accelerator(Keys.ctrl(KeyEvent.VK_N))
+      .deriveIcons(Base.getThemeImageFile("new.png"))
       .listener(this::handleNewSketch);
 
   public final SimpleAction openSketchAction = new SimpleAction(tr("Open..."))
       .accelerator(Keys.ctrl(KeyEvent.VK_O))
+      .deriveIcons(Base.getThemeImageFile("open.png"))
       .listener(this::handleOpenSketch);
 
   public final SimpleAction saveSketchAction = new SimpleAction(tr("Save"))
       .accelerator(Keys.ctrl(KeyEvent.VK_S))
+      .deriveIcons(Base.getThemeImageFile("save.png"))
       .listener(() -> {
         handleSave(false);
       });
 
   public final SimpleAction saveSketchAsAction = new SimpleAction(tr("Save As..."))
       .accelerator(Keys.ctrlShift(KeyEvent.VK_S))
+      .deriveIcons(Base.getThemeImageFile("save.png"))
       .listener(this::handleSaveAs);
 
   public final SimpleAction closeSketchAction = new SimpleAction(tr("Close"))
@@ -1643,18 +1647,21 @@ public class Editor extends JFrame implements RunnerListener {
 
   public final SimpleAction verifyAction = new SimpleAction(tr("Verify / Compile"))
       .accelerator(Keys.ctrl(KeyEvent.VK_R))
+      .deriveIcons(Base.getThemeImageFile("verify.png"))
       .listener(() -> {
         handleRun(false, presentHandler, runHandler);
       });
 
   public final SimpleAction uploadAction = new SimpleAction(tr("Upload"))
       .accelerator(Keys.ctrl(KeyEvent.VK_U))
+      .deriveIcons(Base.getThemeImageFile("upload.png"))
       .listener(() -> {
         handleExport(false);
       });
 
   public final SimpleAction uploadUsingProgrammerAction = new SimpleAction(tr("Upload Using Programmer"))
       .accelerator(Keys.ctrlShift(KeyEvent.VK_U))
+      .deriveIcons(Base.getThemeImageFile("upload.png"))
       .listener(() -> {
         handleExport(true);
       });
