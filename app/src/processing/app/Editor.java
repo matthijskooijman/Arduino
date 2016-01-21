@@ -174,9 +174,6 @@ public class Editor extends JFrame implements RunnerListener {
 
   //Runner runtime;
 
-  private JMenuItem saveMenuItem;
-  private JMenuItem saveAsMenuItem;
-
   //boolean presenting;
   private boolean uploading;
 
@@ -200,6 +197,7 @@ public class Editor extends JFrame implements RunnerListener {
     super("Arduino");
     this.base = ibase;
     this.platform = platform;
+    showSketchFolderAction.setEnabled(Base.openFolderAvailable());
 
     Base.setIcon(this);
 
@@ -477,8 +475,8 @@ public class Editor extends JFrame implements RunnerListener {
    */
   public void applyPreferences() {
     boolean external = PreferencesData.getBoolean("editor.external");
-    saveMenuItem.setEnabled(!external);
-    saveAsMenuItem.setEnabled(!external);
+    saveSketchAction.setEnabled(!external);
+    saveSketchAsAction.setEnabled(!external);
     for (EditorTab tab: tabs)
       tab.applyPreferences();
   }
@@ -582,10 +580,8 @@ public class Editor extends JFrame implements RunnerListener {
     fileMenu.add(examplesMenu);
 
     fileMenu.add(new JMenuItem(closeSketchAction));
-    saveMenuItem = new JMenuItem(saveSketchAction);
-    fileMenu.add(saveMenuItem);
-    saveAsMenuItem = new JMenuItem(saveSketchAsAction);
-    fileMenu.add(saveAsMenuItem);
+    fileMenu.add(new JMenuItem(saveSketchAction));
+    fileMenu.add(new JMenuItem(saveSketchAsAction));
     fileMenu.addSeparator();
     fileMenu.add(new JMenuItem(pageSetupAction));
     fileMenu.add(new JMenuItem(printAction));
@@ -614,10 +610,7 @@ public class Editor extends JFrame implements RunnerListener {
     sketchMenu.add(new JMenuItem(uploadUsingProgrammerAction));
     sketchMenu.add(new JMenuItem(verifyAndSaveAction));
     sketchMenu.addSeparator();
-
-    JMenuItem item = new JMenuItem(showSketchFolderAction);
-    sketchMenu.add(item);
-    item.setEnabled(Base.openFolderAvailable());
+    sketchMenu.add(new JMenuItem(showSketchFolderAction));
 
     if (importMenu == null) {
       importMenu = new JMenu(tr("Include Library"));
