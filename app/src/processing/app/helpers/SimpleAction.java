@@ -54,6 +54,10 @@ import javax.swing.KeyStroke;
  */
 public class SimpleAction extends AbstractAction {
   private ActionListener listener;
+  /** Key for the icon to be displayed when this action is marked as selected */
+  public static final String SELECTED_ICON = "ArduinoSelectedIconKey";
+  /** Key for the icon to be displayed when the mouse hovers over it */
+  public static final String ROLLOVER_ICON = "ArduinoRolloverIconKey";
 
   /**
    * Version of ActionListener that does not take an ActionEvent as an argument
@@ -104,18 +108,14 @@ public class SimpleAction extends AbstractAction {
     return this;
   }
 
-  public SimpleAction(String name, String description, KeyStroke accelerator,
-                      AnonymousActionListener listener) {
-    this(name, description, accelerator,
-        (ActionEvent) -> listener.actionPerformed());
+  public SimpleAction selectedIcon(Icon icon) {
+    this.putValue(SELECTED_ICON, icon);
+    return this;
   }
 
-  public SimpleAction(String name, String description, KeyStroke accelerator,
-                      ActionListener listener) {
-    this.putValue(NAME, name);
-    this.putValue(SHORT_DESCRIPTION, description);
-    this.putValue(ACCELERATOR_KEY, accelerator);
-    this.listener = listener;
+  public SimpleAction rolloverIcon(Icon icon) {
+    this.putValue(ROLLOVER_ICON, icon);
+    return this;
   }
 
   @Override
