@@ -2002,6 +2002,13 @@ public class Base {
     return getLibImage("theme/" + name, who);
   }
 
+  /**
+   * Get the filename of an image associated with the current color
+   * theme.
+   */
+  static public File getThemeImageFile(String name) {
+    return new File(new File(getContentFile("lib"), "theme"), name);
+  }
 
   /**
    * Return an Image object from inside the Processing lib folder.
