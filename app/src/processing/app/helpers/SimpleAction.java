@@ -31,9 +31,11 @@ package processing.app.helpers;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 
 import javax.swing.AbstractAction;
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
 
 /**
@@ -115,6 +117,26 @@ public class SimpleAction extends AbstractAction {
 
   public SimpleAction rolloverIcon(Icon icon) {
     this.putValue(ROLLOVER_ICON, icon);
+    return this;
+  }
+
+  /**
+   * This sets the main icon to the filename given. The filename for
+   * selected and rollover icons is automatically derived by adding
+   * "-selected" and "-rollover" to the filename. If either of these do
+   * not exist, it is silently skipped.
+   */
+  public SimpleAction deriveIcons(File filename) {
+    icon(new ImageIcon(filename.getAbsolutePath()));
+    FileUtils.SplitFile split = FileUtils.splitFilename(filename.getAbsolutePath());
+
+    String selected = FileUtils.addExtension(split.basename + "-selected", split.extension);
+    if (new File(selected).exists())
+      selectedIcon(new ImageIcon(selected));
+
+    String rollover = FileUtils.addExtension(split.basename + "-rollover", split.extension);
+    if (new File(rollover).exists())
+      rolloverIcon(new ImageIcon(rollover));
     return this;
   }
 
