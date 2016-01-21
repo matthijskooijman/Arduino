@@ -142,7 +142,6 @@ public class Editor extends JFrame implements RunnerListener {
 
   private int numTools = 0;
 
-  private final EditorToolbar toolbar;
   // these menus are shared so that they needn't be rebuilt for all windows
   // each time a sketch is created, renamed, or moved.
   static JMenu toolbarMenu;
@@ -261,8 +260,7 @@ public class Editor extends JFrame implements RunnerListener {
       toolbarMenu = new JMenu();
       base.rebuildToolbarMenu(toolbarMenu);
     }
-    toolbar = new EditorToolbar(this, toolbarMenu);
-    upper.add(toolbar);
+    upper.add(new EditorToolbar(this));
 
     header = new EditorHeader(this);
     upper.add(header);
@@ -1740,7 +1738,7 @@ public class Editor extends JFrame implements RunnerListener {
     if (shouldSavePredicate.test(sketchController)) {
       handleSave(true);
     }
-    toolbar.activateRun();
+    verifyAction.setSelected(true);
     status.progress(tr("Compiling sketch..."));
 
     // do this to advance/clear the terminal window / dos prompt / etc
@@ -1790,7 +1788,7 @@ public class Editor extends JFrame implements RunnerListener {
       }
 
       status.unprogress();
-      toolbar.deactivateRun();
+      verifyAction.setSelected(false);
     }
   }
 
@@ -2004,7 +2002,7 @@ public class Editor extends JFrame implements RunnerListener {
 
 
   private boolean handleSave2() {
-    toolbar.activateSave();
+    saveSketchAction.setSelected(true);
     statusNotice(tr("Saving..."));
     boolean saved = false;
     try {
@@ -2038,13 +2036,13 @@ public class Editor extends JFrame implements RunnerListener {
       // this is used when another operation calls a save
     }
     //toolbar.clear();
-    toolbar.deactivateSave();
+    saveSketchAction.setSelected(false);
     return saved;
   }
 
 
   public boolean handleSaveAs() {
-    toolbar.activateSave();
+    saveSketchAsAction.setSelected(true);
 
     //SwingUtilities.invokeLater(new Runnable() {
     //public void run() {
@@ -2068,7 +2066,7 @@ public class Editor extends JFrame implements RunnerListener {
 
     } finally {
       // make sure the toolbar button deactivates
-      toolbar.deactivateSave();
+      saveSketchAsAction.setSelected(false);
     }
 
     return true;
@@ -2126,7 +2124,11 @@ public class Editor extends JFrame implements RunnerListener {
         handleSave(true);
       }
     }
-    toolbar.activateExport();
+    if (usingProgrammer)
+      uploadUsingProgrammerAction.setSelected(true);
+    else
+      uploadAction.setSelected(true);
+
     console.clear();
     status.progress(tr("Uploading to I/O Board..."));
 
@@ -2172,9 +2174,7 @@ public class Editor extends JFrame implements RunnerListener {
       }
       status.unprogress();
       uploading = false;
-      //toolbar.clear();
-      toolbar.deactivateExport();
-
+      uploadAction.setSelected(false);
       resumeOrCloseSerialMonitor();
       resumeOrCloseSerialPlotter();
       base.onBoardOrPortChange();
@@ -2267,9 +2267,7 @@ public class Editor extends JFrame implements RunnerListener {
       }
       status.unprogress();
       uploading = false;
-      //toolbar.clear();
-      toolbar.deactivateExport();
-
+      uploadUsingProgrammerAction.setSelected(false);
       resumeOrCloseSerialMonitor();
       resumeOrCloseSerialPlotter();
 
@@ -2547,8 +2545,6 @@ public class Editor extends JFrame implements RunnerListener {
   public void statusError(String what) {
     System.err.println(what);
     status.error(what);
-    //new Exception("deactivating RUN").printStackTrace();
-    toolbar.deactivateRun();
   }
 
 

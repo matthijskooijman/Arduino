@@ -24,428 +24,279 @@
 package processing.app;
 
 import javax.swing.*;
-import javax.swing.event.MouseInputListener;
+
+import processing.app.helpers.SimpleAction;
+
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 import static processing.app.I18n.tr;
 
-
 /**
- * run/stop/etc buttons for the ide
+ * Toolbar for the IDE.
  */
-public class EditorToolbar extends JComponent implements MouseInputListener, KeyEventDispatcher {
-
-  /**
-   * Rollover titles for each button.
-   */
-  private static final String[] title = {
-    tr("Verify"), tr("Upload"), tr("New"), tr("Open"), tr("Save"), tr("Serial Monitor")
-  };
-
-  /**
-   * Titles for each button when the shift key is pressed.
-   */
-  private static final String[] titleShift = {
-    tr("Verify"), tr("Upload Using Programmer"), tr("New"), tr("Open"), tr("Save As..."), tr("Serial Monitor")
-  };
-
-  private static final int BUTTON_COUNT = title.length;
-  /**
-   * Width of each toolbar button.
-   */
-  private static final int BUTTON_WIDTH = 27;
-  /**
-   * Height of each toolbar button.
-   */
-  private static final int BUTTON_HEIGHT = 32;
-  /**
-   * The amount of space between groups of buttons on the toolbar.
-   */
+public class EditorToolbar extends JPanel {
+  /** The amount of space between groups of buttons on the toolbar. */
   private static final int BUTTON_GAP = 5;
-  /**
-   * Size of the button image being chopped up.
-   */
-  private static final int BUTTON_IMAGE_SIZE = 33;
 
+  /** Amount of space before the first button */
+  private static final int LEFT_PADDING = 3;
 
-  private static final int RUN = 0;
-  private static final int EXPORT = 1;
-
-  private static final int NEW = 2;
-  private static final int OPEN = 3;
-  private static final int SAVE = 4;
-
-  private static final int SERIAL = 5;
-
-  private static final int INACTIVE = 0;
-  private static final int ROLLOVER = 1;
-  private static final int ACTIVE = 2;
+  /** Amount of space after the last button */
+  private static final int RIGHT_PADDING = 14;
 
   private final Editor editor;
 
-  private Image offscreen;
-  private int width;
-  private int height;
-
-  private final Color bgcolor;
-
-  private static Image[][] buttonImages;
-  private int currentRollover;
-
-  private JPopupMenu popup;
-  private final JMenu menu;
-
-  private int buttonCount;
-  private int[] state = new int[BUTTON_COUNT];
-  private Image[] stateImage;
-  private final int[] which; // mapping indices to implementation
-
-  private int[] x1;
-  private int[] x2;
-  private int y1;
-  private int y2;
-
-  private final Font statusFont;
-  private final Color statusColor;
-
-  private boolean shiftPressed;
-
-  public EditorToolbar(Editor editor, JMenu menu) {
+  public EditorToolbar(Editor editor) {
     this.editor = editor;
-    this.menu = menu;
 
-    buttonCount = 0;
-    which = new int[BUTTON_COUNT];
+    setBackground(Theme.getColor("buttons.bgcolor"));
+    setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
-    //which[buttonCount++] = NOTHING;
-    which[buttonCount++] = RUN;
-    which[buttonCount++] = EXPORT;
-    which[buttonCount++] = NEW;
-    which[buttonCount++] = OPEN;
-    which[buttonCount++] = SAVE;
-    which[buttonCount++] = SERIAL;
+    // Create two labels to hold the tooltips for the left and right
+    // buttons
+    JLabel tooltipLeft = new JLabel("");
+    tooltipLeft.setFont(Theme.getFont("buttons.status.font"));
+    tooltipLeft.setForeground(Theme.getColor("buttons.status.color"));
+    JLabel tooltipRight = new JLabel("");
+    tooltipRight.setFont(Theme.getFont("buttons.status.font"));
+    tooltipRight.setForeground(Theme.getColor("buttons.status.color"));
 
-    currentRollover = -1;
+    // Create the buttons
+    add(Box.createRigidArea(new Dimension(LEFT_PADDING, 0)));
+    addLeftButtons(tooltipLeft);
+    add(Box.createRigidArea(new Dimension(BUTTON_GAP, 0)));
+    add(tooltipLeft);
+    add(Box.createHorizontalGlue());
+    add(tooltipRight);
+    add(Box.createRigidArea(new Dimension(BUTTON_GAP, 0)));
+    addRightButtons(tooltipRight);
+    add(Box.createRigidArea(new Dimension(RIGHT_PADDING, 0)));
 
-    bgcolor = Theme.getColor("buttons.bgcolor");
-    statusFont = Theme.getFont("buttons.status.font");
-    statusColor = Theme.getColor("buttons.status.color");
-
-    addMouseListener(this);
-    addMouseMotionListener(this);
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
+    // Sniff all keys before they are dispatched, and inform all buttons
+    // of the current shift state.
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher((KeyEvent e) -> {
+      if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
+        for (Component c : getComponents()) {
+          if (c instanceof ToolbarButton)
+            ((ToolbarButton) c).shiftChanged(e.isShiftDown());
+        }
+      }
+      // Return false to continue processing this keyEvent
+      return false;
+    });
   }
 
-  private void loadButtons() {
-    Image allButtons = Base.getThemeImage("buttons.gif", this);
-    buttonImages = new Image[BUTTON_COUNT][3];
+  private void addLeftButtons(JLabel tooltipLabel) {
+    add(new ToolbarButton(editor.verifyAction, tooltipLabel));
+    add(new ToolbarButton(editor.uploadAction, editor.uploadUsingProgrammerAction, tooltipLabel));
+    add(Box.createRigidArea(new Dimension(BUTTON_GAP, 0)));
+    add(new ToolbarButton(editor.newSketchAction, tooltipLabel));
+    add(new ToolbarButton(openSketchAction, tooltipLabel));
+    add(new ToolbarButton(editor.saveSketchAction, editor.saveSketchAsAction, tooltipLabel));
+  }
 
-    for (int i = 0; i < BUTTON_COUNT; i++) {
-      for (int state = 0; state < 3; state++) {
-        Image image = createImage(BUTTON_WIDTH, BUTTON_HEIGHT);
-        Graphics g = image.getGraphics();
-        g.drawImage(allButtons,
-          -(i * BUTTON_IMAGE_SIZE) - 3,
-          (-2 + state) * BUTTON_IMAGE_SIZE, null);
-        buttonImages[i][state] = image;
+  private void addRightButtons(JLabel tooltipLabel) {
+    add(new ToolbarButton(editor.toggleSerialMonitorAction, tooltipLabel));
+  }
+
+  /**
+   * Show a "open sketch" popup menu at the mouse position, used for the
+   * "open" toolbar button.
+   */
+  public final SimpleAction openSketchAction = new SimpleAction(tr("Open"))
+      .deriveIcons(Base.getThemeImageFile("open.png")).listener(this::handleOpen);
+
+  /** Handle the openSketchAction */
+  void handleOpen() {
+    JPopupMenu popup = Editor.toolbarMenu.getPopupMenu();
+    Point p = MouseInfo.getPointerInfo().getLocation();
+    popup.show(this, p.x, p.y);
+  }
+
+  /**
+   * Minimal button, intended to be shown in the toolbar.
+   *
+   * Compared to a normal JButton, this removes all of the decorations,
+   * extra spacing and button text, leaving just the icon. JButton takes
+   * that icon from the Action passed in, but this class additionally
+   * takes a "selected" and "rollover" icon from the action (from
+   * non-standard properties). Displaying these icons is handled by
+   * JButton normally, though this class also takes the "selected" state
+   * from the Action (using the standard property for that).
+   * AbstractButton already supports this for e.g. JRadioButton, but
+   * enabling that support requires overriding a package-private method
+   * we do not have access to.
+   *
+   * Furthermore, this class supports two different actions: one to use
+   * normally and one when shift is pressed, This is implemented by,
+   * whenever shift is pressed, changing the action set in JButton (and
+   * thus also the icon, if it is different). However, when one of these
+   * actions is marked as selected, it will always be the active action,
+   * regardless of the state of the shift key.
+   */
+  private static class ToolbarButton extends JButton {
+    /** The action for this button when shift is not pressed */
+    private final Action normalAction;
+    /**
+     * The action for this button when shift is pressed. Can be null to
+     * always use the normal action.
+     */
+    private final Action shiftAction;
+    /** Is shift currently pressed? */
+    private boolean shiftPressed;
+    /** The label in which to show our name on mouseover */
+    private JLabel tooltipLabel;
+    /** Is our name currently showing in the tooltip? */
+    private boolean tooltipShowing;
+
+    /** Create a toolbar button with a single action */
+    ToolbarButton(Action action, JLabel tooltipLabel) {
+      this(action, null, tooltipLabel);
+    }
+
+    /**
+     * Create a toolbar button that uses one of two actions, depending
+     * on the shift key.
+     */
+    ToolbarButton(Action normalAction, Action shiftAction, JLabel tooltipLabel) {
+      super(normalAction);
+      this.normalAction = normalAction;
+      this.shiftAction = shiftAction;
+      this.tooltipLabel = tooltipLabel;
+
+      // Hide regular button decorations
+      setContentAreaFilled(false);
+      setBorderPainted(false);
+      setBorder(null);
+      setMargin(new Insets(0, 0, 0, 0));
+      // Prevent the button from taking focus after clicking
+      setFocusable(false);
+
+      // Handle tooltips
+      addMouseListener(mouseListener);
+
+      // If we have two actions, make sure to call updateAction to
+      // (possibly) switch the current action whenever either action's
+      // selected state changes.
+      if (shiftAction != null) {
+        PropertyChangeListener listener = (PropertyChangeEvent evt) -> {
+          if (evt.getPropertyName().equals(Action.SELECTED_KEY)) {
+            updateAction();
+          }
+        };
+        normalAction.addPropertyChangeListener(listener);
+        shiftAction.addPropertyChangeListener(listener);
       }
     }
-  }
 
-  @Override
-  public void paintComponent(Graphics screen) {
-    // this data is shared by all EditorToolbar instances
-    if (buttonImages == null) {
-      loadButtons();
+    /** Returns the "selected" state of the given action. */
+    private boolean isSelected(Action action) {
+      Object value = action.getValue(Action.SELECTED_KEY);
+      return value != null && (Boolean) value;
     }
 
-    // this happens once per instance of EditorToolbar
-    if (stateImage == null) {
-      state = new int[buttonCount];
-      stateImage = new Image[buttonCount];
-      for (int i = 0; i < buttonCount; i++) {
-        setState(i, INACTIVE, false);
-      }
-      y1 = 0;
-      y2 = BUTTON_HEIGHT;
-      x1 = new int[buttonCount];
-      x2 = new int[buttonCount];
-    }
-
-    Dimension size = getSize();
-    if ((offscreen == null) ||
-      (size.width != width) || (size.height != height)) {
-      offscreen = createImage(size.width, size.height);
-      width = size.width;
-      height = size.height;
-
-      int offsetX = 3;
-      for (int i = 0; i < buttonCount; i++) {
-        x1[i] = offsetX;
-        if (i == 2 || i == 6) x1[i] += BUTTON_GAP;
-        x2[i] = x1[i] + BUTTON_WIDTH;
-        offsetX = x2[i];
-      }
-
-      // Serial button must be on the right
-      x1[SERIAL] = width - BUTTON_WIDTH - 14;
-      x2[SERIAL] = width - 14;
-    }
-    Graphics g = offscreen.getGraphics();
-    g.setColor(bgcolor); //getBackground());
-    g.fillRect(0, 0, width, height);
-
-    for (int i = 0; i < buttonCount; i++) {
-      g.drawImage(stateImage[i], x1[i], y1, null);
-    }
-
-    g.setColor(statusColor);
-    g.setFont(statusFont);
-
-    /*
-    // if i ever find the guy who wrote the java2d api, i will hurt him.
-     * 
-     * whereas I love the Java2D API. --jdf. lol.
-     * 
-    Graphics2D g2 = (Graphics2D) g;
-    FontRenderContext frc = g2.getFontRenderContext();
-    float statusW = (float) statusFont.getStringBounds(status, frc).getWidth();
-    float statusX = (getSize().width - statusW) / 2;
-    g2.drawString(status, statusX, statusY);
-    */
-    if (currentRollover != -1) {
-      int statusY = (BUTTON_HEIGHT + g.getFontMetrics().getAscent()) / 2;
-      String status = shiftPressed ? titleShift[currentRollover] : title[currentRollover];
-      if (currentRollover != SERIAL)
-        g.drawString(status, (buttonCount - 1) * BUTTON_WIDTH + 3 * BUTTON_GAP, statusY);
-      else {
-        int statusX = x1[SERIAL] - BUTTON_GAP;
-        statusX -= g.getFontMetrics().stringWidth(status);
-        g.drawString(status, statusX, statusY);
-      }
-    }
-
-    screen.drawImage(offscreen, 0, 0, null);
-
-    if (!isEnabled()) {
-      screen.setColor(new Color(0, 0, 0, 100));
-      screen.fillRect(0, 0, getWidth(), getHeight());
-    }
-  }
-
-
-  public void mouseMoved(MouseEvent e) {
-    if (!isEnabled())
-      return;
-
-    // mouse events before paint();
-    if (state == null) return;
-
-    if (state[OPEN] != INACTIVE) {
-      // avoid flicker, since there will probably be an update event
-      setState(OPEN, INACTIVE, false);
-    }
-    handleMouse(e);
-  }
-
-
-  public void mouseDragged(MouseEvent e) {
-  }
-
-
-  private void handleMouse(MouseEvent e) {
-    int x = e.getX();
-    int y = e.getY();
-
-    if (currentRollover != -1) {
-      if ((x > x1[currentRollover]) && (y > y1) &&
-        (x < x2[currentRollover]) && (y < y2)) {
+    /**
+     * Figures out what action should be the current one, based on the
+     * shift status and the actions' selected statuses.
+     */
+    private void updateAction() {
+      // If we have just one action, do not bother
+      if (shiftAction == null)
         return;
 
-      } else {
-        setState(currentRollover, INACTIVE, true);
-        currentRollover = -1;
+      // When both are unselected, or both are selected, the shift key
+      // decides which one to use. If just one is selected, that one is
+      // used.
+      if (isSelected(normalAction) == isSelected(shiftAction))
+        setAction(shiftPressed ? shiftAction : normalAction);
+      else if (isSelected(normalAction))
+        setAction(normalAction);
+      else
+        setAction(shiftAction);
+    }
+
+    /**
+     * Mouse listener that takes care of setting the tooltip when
+     * hovering. Only a single instance of the listener is needed
+     * because it uses getSource() to figure out what ToolbarButton to
+     * update.
+     */
+    static final MouseListener mouseListener = new MouseAdapter() {
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        ToolbarButton b = (ToolbarButton) e.getSource();
+        b.tooltipLabel.setText((String) b.getAction().getValue(Action.NAME));
+        b.tooltipShowing = true;
       }
-    }
-    int sel = findSelection(x, y);
-    if (sel == -1) return;
 
-    if (state[sel] != ACTIVE) {
-      setState(sel, ROLLOVER, true);
-      currentRollover = sel;
-    }
-  }
-
-
-  private int findSelection(int x, int y) {
-    // if app loads slowly and cursor is near the buttons
-    // when it comes up, the app may not have time to load
-    if ((x1 == null) || (x2 == null)) return -1;
-
-    for (int i = 0; i < buttonCount; i++) {
-      if ((y > y1) && (x > x1[i]) &&
-        (y < y2) && (x < x2[i])) {
-        //System.out.println("sel is " + i);
-        return i;
+      @Override
+      public void mouseExited(MouseEvent e) {
+        ToolbarButton b = (ToolbarButton) e.getSource();
+        b.tooltipLabel.setText("");
+        b.tooltipShowing = false;
       }
+    };
+
+    /**
+     * Should be called by EditorToolbar whenever shift is pressed or released.
+     */
+    public void shiftChanged(boolean newValue) {
+      shiftPressed = newValue;
+      updateAction();
     }
-    return -1;
-  }
 
-
-  private void setState(int slot, int newState, boolean updateAfter) {
-    state[slot] = newState;
-    stateImage[slot] = buttonImages[which[slot]][newState];
-    if (updateAfter) {
-      repaint();
+    /**
+     * This is called by AbstractAction whenever the current Action
+     * changes (e.g. through setAction) and copies some additional
+     * properties from the Action.
+     */
+    @Override
+    protected void configurePropertiesFromAction(Action action) {
+      super.configurePropertiesFromAction(action);
+      setSelectedIcon((Icon) action.getValue(SimpleAction.SELECTED_ICON));
+      setRolloverIcon((Icon) action.getValue(SimpleAction.ROLLOVER_ICON));
+      setSelected(isSelected(action));
+      // Hide the text if an icon was set. Normally, an icon should be
+      // used, but this makes adding a button easier during development.
+      if (getIcon() != null)
+        setText("");
+      if (tooltipShowing)
+        tooltipLabel.setText((String) action.getValue(Action.NAME));
     }
-  }
 
+    /**
+     * This is called by AbstractAction whenever a property of the
+     * current Action changes and copies some additional properties from
+     * the Action.
+     */
+    @Override
+    protected void actionPropertyChanged(Action action, String propertyName) {
+      // It can happen that the propertyChangeListener registered in our
+      // constructor changes the action, before the
+      // propertyChangeListener that AbstractButton registers (and that
+      // calls us) has fired. If this happens, just ignore the latter
+      // here.
+      if (action != getAction())
+        return;
 
-  public void mouseEntered(MouseEvent e) {
-    handleMouse(e);
-  }
+      super.actionPropertyChanged(action, propertyName);
 
-
-  public void mouseExited(MouseEvent e) {
-    // if the popup menu for is visible, don't register this,
-    // because the popup being set visible will fire a mouseExited() event
-    if ((popup != null) && popup.isVisible()) return;
-
-    if (state[OPEN] != INACTIVE) {
-      setState(OPEN, INACTIVE, true);
-    }
-    handleMouse(e);
-  }
-
-
-  public void mousePressed(MouseEvent e) {
-
-    // jdf
-    if (!isEnabled())
-      return;
-
-    final int x = e.getX();
-    final int y = e.getY();
-
-    int sel = findSelection(x, y);
-    ///if (sel == -1) return false;
-    if (sel == -1) return;
-    currentRollover = -1;
-
-    switch (sel) {
-      case RUN:
-        editor.handleRun(false, editor.presentHandler, editor.runHandler);
-        break;
-
-//    case STOP:
-//      editor.handleStop();
-//      break;
-//
-      case OPEN:
-        popup = menu.getPopupMenu();
-        popup.show(EditorToolbar.this, x, y);
-        break;
-
-      case NEW:
-        try {
-          editor.base.handleNew();
-        } catch (Exception e1) {
-          throw new RuntimeException(e1);
-        }
-        break;
-
-      case SAVE:
-        if (e.isShiftDown()) {
-          editor.handleSaveAs();
-        } else {
-          editor.handleSave(false);
-        }
-        break;
-
-      case EXPORT:
-        editor.handleExport(e.isShiftDown());
-        break;
-
-      case SERIAL:
-        editor.handleSerial();
-        break;
-    }
-  }
-
-
-  public void mouseClicked(MouseEvent e) {
-  }
-
-
-  public void mouseReleased(MouseEvent e) {
-  }
-
-
-  /**
-   * Set a particular button to be active.
-   */
-  private void activate(int what) {
-    if (buttonImages != null) {
-      setState(what, ACTIVE, true);
-    }
-  }
-
-  public void activateRun() {
-    activate(RUN);
-  }
-
-  public void activateSave() {
-    activate(SAVE);
-  }
-
-  public void activateExport() {
-    activate(EXPORT);
-  }
-
-  /**
-   * Set a particular button to be active.
-   */
-  private void deactivate(int what) {
-    if (buttonImages != null) {
-      setState(what, INACTIVE, true);
-    }
-  }
-
-  public void deactivateRun() {
-    deactivate(RUN);
-  }
-
-  public void deactivateSave() {
-    deactivate(SAVE);
-  }
-
-  public void deactivateExport() {
-    deactivate(EXPORT);
-  }
-
-  public Dimension getPreferredSize() {
-    return getMinimumSize();
-  }
-
-
-  public Dimension getMinimumSize() {
-    return new Dimension((BUTTON_COUNT + 1) * BUTTON_WIDTH, BUTTON_HEIGHT);
-  }
-
-
-  public Dimension getMaximumSize() {
-    return new Dimension(3000, BUTTON_HEIGHT);
-  }
-
-  public boolean dispatchKeyEvent(final KeyEvent e) {
-    if (shiftPressed != e.isShiftDown()) {
-      shiftPressed = !shiftPressed;
-      repaint();
-    }
-    // Return false to continue processing this keyEvent
-    return false;
+      // Of these, only selected is expected to change, but check them
+      // all for completeness
+      if (propertyName == SimpleAction.SELECTED_ICON) {
+        setSelectedIcon((Icon) action.getValue(SimpleAction.SELECTED_ICON));
+      } else if (propertyName == SimpleAction.ROLLOVER_ICON) {
+        setRolloverIcon((Icon) action.getValue(SimpleAction.ROLLOVER_ICON));
+      } else if (propertyName == Action.SELECTED_KEY) {
+        setSelected(isSelected(action));
+      } else if (propertyName == Action.NAME && tooltipShowing)
+        tooltipLabel.setText((String) action.getValue(Action.NAME));
+      }
   }
 }
