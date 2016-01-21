@@ -34,6 +34,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 
 import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
@@ -138,6 +139,17 @@ public class SimpleAction extends AbstractAction {
     if (new File(rollover).exists())
       rolloverIcon(new ImageIcon(rollover));
     return this;
+  }
+
+  /* Get the current value of the "selected" property. */
+  public boolean getSelected() {
+    Object value = getValue(Action.SELECTED_KEY);
+    return value != null && (Boolean) value;
+  }
+
+  /* Set the "selected" property */
+  public void setSelected(boolean selected) {
+    putValue(Action.SELECTED_KEY, selected);
   }
 
   @Override
