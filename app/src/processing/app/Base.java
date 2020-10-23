@@ -124,7 +124,7 @@ public class Base {
 
   // these variables help rebuild the "recently used boards"
   // menu on board selection
-  private HashMap<String, JRadioButtonMenuItem> recentBoardItems;
+  private HashMap<String, JRadioButtonMenuItem> boardItems;
   private List<JRadioButtonMenuItem> recentBoardsToClear = new LinkedList<>();;
   private JMenu boardMenu;
   private int recentBoardsJMenuIndex;
@@ -1473,7 +1473,7 @@ public class Base {
 
   public void rebuildBoardsMenu() throws Exception {
     boardsCustomMenus = new LinkedList<>();
-    recentBoardItems = new HashMap<String, JRadioButtonMenuItem>();
+    boardItems = new HashMap<String, JRadioButtonMenuItem>();
 
     // The first custom menu is the "Board" selection submenu
     boardMenu = new JMenu(tr("Board"));
@@ -1625,10 +1625,12 @@ public class Base {
     }
     recentBoardsToClear.clear();
     for (String boardId : recentBoardIds) {
-      JRadioButtonMenuItem addItem = recentBoardItems.get(boardId);
-      boardMenu.add(addItem, recentBoardsJMenuIndex+idxAdv);
-      recentBoardsToClear.add(addItem);
-      addItem.setSelected(boardId.equals(currentBoard));
+      JRadioButtonMenuItem originalItem = boardItems.get(boardId);
+      JRadioButtonMenuItem recentItem = new JRadioButtonMenuItem(originalItem.getAction());
+
+      boardMenu.add(recentItem, recentBoardsJMenuIndex+idxAdv);
+      recentBoardsToClear.add(recentItem);
+      recentItem.setSelected(boardId.equals(currentBoard));
       idxAdv++;
     }
   }
@@ -1662,23 +1664,7 @@ public class Base {
     action.putValue("b", board);
 
     JRadioButtonMenuItem item = new JRadioButtonMenuItem(action);
-
-    // create an action for the "recent boards" copy of this menu item
-    // which clicks the original menu item
-    Action actionClone = new AbstractAction(board.getName()) {
-      public void actionPerformed(ActionEvent actionevent) {
-        item.setSelected(true);
-        item.getAction().actionPerformed(new ActionEvent(this, -1, ""));
-      }
-    }; 
-
-    // No need to hog memory if recent boards feature is turned off
-    if (PreferencesData.getInteger("recent.num_boards") > 0) {
-      // create a menu item for the "recent boards" menu
-      JRadioButtonMenuItem itemClone = new JRadioButtonMenuItem(actionClone);
-      // populate list of menuitem copies
-      recentBoardItems.put(boardId, itemClone);
-    }
+    boardItems.put(boardId, item);
 
     if (selBoard.equals(boardId) && selPackage.equals(packageName)
             && selPlatform.equals(platformName)) {
