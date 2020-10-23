@@ -125,7 +125,6 @@ public class Base {
   // these variables help rebuild the "recently used boards"
   // menu on board selection
   private HashMap<String, JRadioButtonMenuItem> boardItems;
-  private List<JRadioButtonMenuItem> recentBoardsToClear = new LinkedList<>();;
   private JMenu boardMenu;
   private int recentBoardsJMenuIndex;
 
@@ -1620,16 +1619,15 @@ public class Base {
     Collection<String> recentBoardIds = PreferencesData.getCollection("recent.boards");
     String currentBoard = PreferencesData.get("board");
     int idxAdv = 0;
-    for (JRadioButtonMenuItem itemToClear : recentBoardsToClear) {
-      boardMenu.remove(itemToClear);
+    // Remove existing items until the separator
+    while (!(boardMenu.getMenuComponent(recentBoardsJMenuIndex) instanceof JSeparator)) {
+      boardMenu.remove(recentBoardsJMenuIndex);
     }
-    recentBoardsToClear.clear();
     for (String boardId : recentBoardIds) {
       JRadioButtonMenuItem originalItem = boardItems.get(boardId);
       JRadioButtonMenuItem recentItem = new JRadioButtonMenuItem(originalItem.getAction());
 
       boardMenu.add(recentItem, recentBoardsJMenuIndex+idxAdv);
-      recentBoardsToClear.add(recentItem);
       recentItem.setSelected(boardId.equals(currentBoard));
       idxAdv++;
     }
