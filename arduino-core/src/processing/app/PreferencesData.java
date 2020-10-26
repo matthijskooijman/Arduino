@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.MissingResourceException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static processing.app.I18n.format;
 import static processing.app.I18n.tr;
@@ -275,7 +276,11 @@ public class PreferencesData {
   }
 
   public static void setCollection(String key, Collection<String> values) {
-    String value = values.stream().collect(Collectors.joining(","));
+    setCollection(key, values.stream());
+  }
+
+  public static void setCollection(String key, Stream<String> values) {
+    String value = values.collect(Collectors.joining(","));
     set(key, value);
   }
 
