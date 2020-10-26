@@ -1366,37 +1366,21 @@ public class Base {
       }
     }
 
-    // Update recent boards list in preferences
-    List<String> newRecentBoardIds = new ArrayList<String>();
-    String currentBoard = PreferencesData.get("board");  
-    for (String recentBoard : PreferencesData.getCollection("recent.boards")){
-      if (!recentBoard.equals(currentBoard)) {
-        newRecentBoardIds.add(recentBoard);
-      }
-    }
-    newRecentBoardIds.add(0, currentBoard);
+    // Prepend current board to recent boards and limit to max size
+    String currentBoard = PreferencesData.get("board");
+    Stream newRecentBoardIds =
+      Stream.concat(
+        Stream.of(currentBoard),
+        PreferencesData.getCollection("recent.boards").stream()
+      ).distinct().limit(PreferencesData.getInteger("recent.num_boards"));
 
-    int numBoards = 0;
-
-    if (PreferencesData.has("recent.num_boards")) {
-      numBoards = PreferencesData.getInteger("recent.num_boards");
-    }
-
-    while (newRecentBoardIds.size() > numBoards) {
-      newRecentBoardIds.remove(newRecentBoardIds.size() - 1);
-    }
     PreferencesData.setCollection("recent.boards", newRecentBoardIds);
 
-    // If recent.num_boards is 0, interpret this as the feature
-    // being turned off. There's no need to rebuild the menu
-    // because it will be hidden
-    if (numBoards > 0) {
-      try {
-        rebuildRecentBoardsList();
-      } catch (Exception e) {
-        //TODO show error
-        e.printStackTrace();
-      }    
+    try {
+      rebuildRecentBoardsList();
+    } catch (Exception e) {
+      //TODO show error
+      e.printStackTrace();
     }
 
     // Update editors status bar
