@@ -1623,13 +1623,14 @@ public class Base {
     while (!(boardMenu.getMenuComponent(recentBoardsJMenuIndex) instanceof JSeparator)) {
       boardMenu.remove(recentBoardsJMenuIndex);
     }
+
+    int insertIdx = recentBoardsJMenuIndex;
     for (String boardId : recentBoardIds) {
       JRadioButtonMenuItem originalItem = boardItems.get(boardId);
       JRadioButtonMenuItem recentItem = new JRadioButtonMenuItem(originalItem.getAction());
-
-      boardMenu.add(recentItem, recentBoardsJMenuIndex+idxAdv);
       recentItem.setSelected(boardId.equals(currentBoard));
-      idxAdv++;
+
+      boardMenu.add(recentItem, insertIdx++);
     }
   }
 
